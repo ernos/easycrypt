@@ -1,0 +1,10 @@
+{
+    "input_files": [],
+    "output_file": [],
+    "mode": "",
+    "use_zenity": true,
+    "delete_method": "shred",
+    "shred_passes": 10,
+    "auto_overwrite": true,
+    "delete_original": false
+}
