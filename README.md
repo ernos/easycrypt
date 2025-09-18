@@ -1,65 +1,63 @@
 # EasyCrypt
-EasyCrypt is a Python-based file encryption and decryption tool supporting both GUI (Zenity) and terminal modes. It uses strong cryptography (Fernet/AES) and offers secure file deletion options. Designed for use as a Nautilus script or directly from the command line.
 
+EasyCrypt is a Python-based tool for secure file encryption and decryption, supporting both Zenity GUI dialogs and terminal interaction. It is designed for easy integration as a Nautilus script or direct command-line use, with flexible configuration via command-line arguments or a JSON config file.
 
-## Features
+---
 
-- Encrypt and decrypt files using password-based Fernet encryption.
-- Optional Zenity GUI dialogs for password entry and notifications.
-- Secure deletion of original files using shred, dd, or rm.
-- Configurable number of overwrite passes for file deletion.
-- Auto-detection of encryption/decryption mode.
-- Configurable via command-line arguments or JSON config file.
-- Suitable for integration as a Nautilus script or terminal use.
+## Description
+
+Encrypt or decrypt files securely, with optional Zenity GUI or terminal interaction.  
+By default, EasyCrypt uses Zenity dialogs for password entry and notifications, making it ideal for integration as a Nautilus script (place in `~/.local/share/nautilus/scripts`).  
+You can also use the script directly from the terminal or in automation contexts, with options to disable Zenity and control input/output methods.  
+EasyCrypt reads the default configuration file `config.json` in the same directory as the script. Command-line arguments override configuration file settings.
+
+---
 
 ## Usage
-For easier usage place in a folder called "bin" in your home directory, and then put this in your .bashrc:
-alias easycrypt=".~/bin/easycrypt.py"
-### Command-Line
 
-"""
-sh
-python3 easycrypt.py [OPTIONS] INPUT [INPUT ...] [-o OUTPUT | --output OUTPUT]
-"""
+```sh
+python3 easycrypt.py INPUTS [INPUTS ...] [-o OUTPUT | --output OUTPUT] [OPTIONS]
+```
 
-#### Arguments
+### Required Arguments
 
-- INPUT  
-  One or more input files, or - to read from stdin.
+- **INPUTS**  
+  One or more input files, or `-` to read from stdin.
 
-- -o, --output OUTPUT
-  Optional. Output file or - for stdout; defaults to auto-naming.
+### Optional Arguments
 
-#### Options
+- -o, --output OUTPUT       Output file or `-` for stdout; defaults to auto-naming.
+- --encrypt | --decrypt     Force encryption or decryption mode (usually auto-detected).
 
-- --encrypt | --decrypt
-  Force encryption or decryption mode (auto-detected by default).
-
-- -p, --password PASSWORD  
+- **-p, --password PASSWORD**  
   Specify password directly (not recommended for security).
 
-- -c, --config FILE  
-  Specify a custom configuration file (JSON).
+- **-c, --config FILE**  
+  Specify a custom configuration file.
 
-- --use-zenity  
-  Enable Zenity dialogs; use GUI input/output.
+- **-z, --use-zenity**  
+  Enable interactive Zenity dialogs in your X window manager. If not specified, uses terminal for stdin/stdout.
 
-- --delete-method METHOD  
-  Select overwrite method before deletion: 'shred', 'dd', or 'rm'.
+- **-m, --delete-method METHOD**  
+  Select overwrite method before deletion: `'shred'`, `'dd'`, or `'rm'`.
 
-- --shred-passes N  
+- **-n, --shred-passes N**  
   Number of times to overwrite file with random data.
 
-- --auto-delete  
-  Automatically delete original files after encryption/decryption.
+- **-d, --auto-delete**  
+  Automatically delete original file after encryption/decryption.
 
-- --help  
-  Show help message and exit.
+- **-v, --version**  
+  Show program's version number and exit.
 
-### Example Command-Line Usage
+- **-h, --help**  
+  Show this help message and exit.
 
-"""
-sh
+---
+
+## Examples
+
+```sh
 python3 easycrypt.py file1.txt file2.txt
 # Uses Zenity dialogs for input/output by default.
 
@@ -68,83 +66,24 @@ python3 easycrypt.py --no-zenity -p mysecret file.txt
 
 python3 easycrypt.py --delete-method dd --shred-passes 3 file.txt
 # Overwrites file 3 times with random data using dd before deletion.
-"""
 
-### Example Nautilus Script Usage
+python3 easycrypt.py --help
+# Show help message.
+```
 
-Place easycrypt.py in ~/.local/share/nautilus/scripts/.  
-Select files in Nautilus, right-click, and choose Scripts > easycrypt.py.
-
-## Configuration File
-
-You can use a JSON config file to set defaults for all options.
-
-### Example: GUI/Nautilus Config (gui-config.json)
-
-"""
-json
-{
-    "input_files": [],
-    "output_file": [],
-    "mode": "",
-    "use_zenity": true,
-    "delete_method": "shred",
-    "shred_passes": 10,
-    "auto_overwrite_encrypted": true,
-    "auto_delete_originals": true
-}
-"""
-
-### Example: Terminal Config (terminal-config.json)
-
-"""
-json
-{
-    "input_files": ["file1.txt", "file2.txt"],
-    "output_file": "",
-    "mode": "encrypt",
-    "use_zenity": false,
-    "delete_method": "dd",
-    "shred_passes": 5,
-    "auto_overwrite_encrypted": false,
-    "auto_delete_originals": false,
-    "password": "yourpassword"
-}
-"""
-
-## Configuration Options
-
-| Option                   | Type      | Description                                                                                  |
-|--------------------------|-----------|----------------------------------------------------------------------------------------------|
-| input_files              | list      | List of input files to process                                                               |
-| output_file              | string    | Output file name (optional)                                                                  |
-| mode                     | string    | "encrypt" or "decrypt" (auto-detected if empty)                                         |
-| use_zenity               | bool      | Use Zenity GUI dialogs (true) or terminal (false)                                       |
-| delete_method            | string    | File deletion method: "shred", "dd", or "rm"                                          |
-| shred_passes             | int       | Number of overwrite passes for deletion                                                      |
-| auto_overwrite_encrypted | bool      | Automatically overwrite existing encrypted files                                             |
-| auto_delete_originals    | bool      | Automatically delete original files after encryption/decryption                              |
-| password                 | string    | Password for encryption/decryption (optional, not recommended to store in config)            |
-| config_file              | string    | Path to config file (optional)                                                               |
+---
 
 ## Notes
 
-- Passwords passed via command line or stored in config files may be visible in your shell history or process list. 
-    Use Zenity dialogs or terminal input (do not pass --password argument and no password configuration option) for better security.
-- Encryption or decryption mode is auto-detected; override with --encrypt or --decrypt if needed.
+- Passwords passed via command line may be visible in your shell history and process list.
+- Encryption or decryption mode is auto-detected; override with `--encrypt` or `--decrypt` if needed.
 - When used as a Nautilus script, select files and choose 'Scripts > easycrypt.py'.
 
-## Secure Deletion Methods
+---
 
-- **shred**: Overwrites file with random data multiple times and deletes it.
-- **dd**: Overwrites file with random data using dd and deletes it.
-- **rm**: Deletes file without overwriting (not secure).
+## Credits
 
-## License
+©️ Copyright 2025 Maximilian Cornett  
+📨 max.cornett@gmail.com 📨
 
-MIT License
-
-## Author
-
-EasyCrypt
-
+---
