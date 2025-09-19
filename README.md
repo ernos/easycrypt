@@ -11,17 +11,21 @@ By default, EasyCrypt uses Zenity dialogs for password entry and notifications, 
 There is also a separate nautilus extension script that adds an item to the nautilus context menu. For this to work you make the file executable and add it to you PATH environment variable (or just put it into /usr/bin if you have root access).
 Installing without root access from any folder:
 ```
-git clone https://github.com/ernos/easycrypt.git
 mkdir ~/bin
-ln -s $PWD/easycrypt/easycrypt.py ~/bin/easycrypt
-ln -s $PWD/easycrypt/easycryptconfig.json ~/easycryptconfig.json
-#For installing nautilus extension:
-mkdir ~/.local/share/nautilus-python/extensions/nautilus-easycrypt.py
-ln -s $PWD/easycrypt/nautilus-easycrypt.py ~/.local/share/nautilus-python/extensions/nautilus-easycrypt.py
+git clone https://github.com/ernos/easycrypt.git
+ln -s $PWD/easycrypt.py ~/bin/easycrypt
+ln -s $PWD/easycryptconfig.json ~/easycryptconfig.json
 
 #if your $PATH env does not have your /home/x/bin you need to run these two commands as well:
 echo 'PATH="$HOME/bin:$PATH"' >> .bashrc
 source .bashrc
+```
+For installing nautilus context menu extension:
+```
+#For installing nautilus extension:
+mkdir ~/.local/share/nautilus-python/extensions/nautilus-easycrypt.py
+ln -s $PWD/nautilus-python/extensions/easycrypt-nautilus.py ~/.local/share/nautilus-python/extensions/easycrypt-nautilus.py
+nautilus -q
 ```
 You can also use the script directly from the terminal or in automation contexts, with options to disable Zenity and control input/output methods.  
 EasyCrypt reads the default configuration file `config.json` in the same directory as the script. Command-line arguments override configuration file settings.
