@@ -9,7 +9,6 @@ EasyCrypt is a Python-based tool for secure file encryption and decryption, supp
 Encrypt or decrypt files securely, with optional Zenity GUI or terminal interaction.  
 By default, EasyCrypt uses Zenity dialogs for password entry and notifications, making it ideal for integration as a Nautilus script (place in `~/.local/share/nautilus/scripts` together with your config.json file (use_zenity=True)).
 There is also a separate nautilus extension script that adds an item to the nautilus context menu. For this to work you make the file executable and add it to you PATH environment variable (or just put it into /usr/bin if you have root access).
-<<<<<<< HEAD
 Installing without root access from any folder:
 ```
 git clone https://github.com/ernos/easycrypt.git
@@ -17,13 +16,9 @@ mkdir ~/bin
 ln -s $PWD/easycrypt/easycrypt ~/bin/easycrypt
 ln -s $PWD/easycrypt/easycrypt-config.json ~/bin/easycrypt-config.json
 #For installing nautilus extension:
-=======
-Installing without root access:
-```
-git clone https://github.com/ernos/easycrypt.git
-mkdir ~/bin
-ln -s ~/easycrypt/easycrypt ~/bin/easycrypt
->>>>>>> d57f2507c83d399987289c3bbb1c4fe7e3d526dd
+mkdir ~/.local/share/nautilus-python/extensions/nautilus-easycrypt.py
+ln -s $PWD/easycrypt/nautilus-easycrypt.py ~/.local/share/nautilus-python/extensions/nautilus-easycrypt.py
+
 #if your $PATH env does not have your /home/x/bin you need to run these two commands as well:
 echo 'PATH="$HOME/bin:$PATH"' >> .bashrc
 source .bashrc
