@@ -13,7 +13,7 @@ Installing without root access from any folder:
 ```
 git clone https://github.com/ernos/easycrypt.git
 mkdir ~/bin
-ln -s $PWD/easycrypt/easycrypt ~/bin/easycrypt
+ln -s $PWD/easycrypt/easycrypt.py ~/bin/easycrypt
 ln -s $PWD/easycrypt/easycrypt-config.json ~/bin/easycrypt-config.json
 #For installing nautilus extension:
 mkdir ~/.local/share/nautilus-python/extensions/nautilus-easycrypt.py
