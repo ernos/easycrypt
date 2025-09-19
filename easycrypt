@@ -81,6 +81,21 @@ def zenity_entry(msg, default=""):
         stdout=subprocess.PIPE,
     )
     return result.stdout.decode().strip()
+def zenity_select_files(start_dir="."):
+    result = subprocess.run(
+        [
+            "zenity",
+            "--file-selection",
+            "--multiple",
+            "--separator=|",
+            "--title=🗃️Select files for EasyCrypt🗃️",
+            f"--filename={os.path.abspath(start_dir)}/"
+        ],
+        stdout=subprocess.PIPE,
+    )
+    # Zenity returns selected files separated by '|'
+    files = result.stdout.decode().strip()
+    return files.split('|') if files else []
 def outl(str, type=DEBUG):
     global config
     global msgtype
@@ -141,7 +156,7 @@ def outl(str, type=DEBUG):
                         tmppass = zenity_password(f"{str}")
                         tmppass2 = zenity_password(f"Enter password again")
                         if tmppass == tmppass2:
-                            print(f"✅ Passwords matched continueing...")
+                            print(f"✅ Passwords matched continuing...")
                             return tmppass
                         else:
                             zenity_error(f"Passwords do not match! Try again.")
@@ -235,10 +250,9 @@ def decrypt_file(encrypted_path: str, password: str, output_path: str = None):
     decrypted_checksum = hashlib.sha256(decrypted_data).hexdigest()
     output_checksum = file_checksum(output_path)
     if decrypted_checksum == output_checksum:
-        return (
-            True,
-            f"✅ Checksum verified: decryption integrity OK. Decrypted file saved as: {output_path}",
-        )
+        return (True,
+            f"""✅ Checksum verified: decryption integrity OK.✅
+            Decrypted file saved as: {os.path.basename(output_path)}""",)
     else:
         outl("❌ Checksum mismatch after decryption! File may be corrupted.", ERROR)
 def encrypt_file(origfile: str, password: str, output_path=None) -> {str, str, str}:
@@ -256,6 +270,7 @@ def encrypt_file(origfile: str, password: str, output_path=None) -> {str, str, s
     origsha256 = hashlib.sha256(file_data).hexdigest()
     origfiledata = cipher.encrypt(file_data)
 
+    
     outl(f"Original file{origfile} \tsha256:{origsha256}", DEBUG)
 
     # Overwrite protection
@@ -266,7 +281,7 @@ def encrypt_file(origfile: str, password: str, output_path=None) -> {str, str, s
             if config["use_zenity"] == True:
                 subprocess.run(["shred", "-u", "-n", str(config["shred_passes"]), origfile])
                 dooverwrite = True
-                newfilename = outl(f"Enter new name for encrypted output file: {newfilename}", ZENTRY)
+                newfilename = outl(f"Enter new name for encrypted output file: {newfilename}", ENTRY)
 
             elif msgtype == "terminal":
                 if outl(f"Encrypted file '{newfilename}' already exists. Overwrite?",QUESTION):
@@ -281,7 +296,7 @@ def encrypt_file(origfile: str, password: str, output_path=None) -> {str, str, s
         with open(newfilename, "wb") as f:
             f.write(origfilesalt + origfiledata)
 
-        return True, "✅ Encrypted file saved as: " + newfilename
+        return True, "✅ Encrypted file saved as: " + os.path.basename(newfilename)
     except Exception as e:
         newfilename = None
         outl(f"ERROR: Exception coult not save to new encrypted file: {newfilename} Exception message: {e}",ERROR)
@@ -341,7 +356,8 @@ def file_delete_original(origfile: str) -> bool:
     wipemethod = config["delete_method"]
     autodelete = config["delete_original"]
 
-    outl(f"Filename:{origfile} is being deleted with {wipemethod} and {numpasses} passes",DEBUGVERBOSE)
+    if config['verbose_logging']:
+        outl(f"Filename:{origfile} is being deleted with {wipemethod} and {numpasses} passes",DEBUGVERBOSE)
     if autodelete == False:
         outl("Autodelete is turned off", DEBUG)
         return False, ""
@@ -350,7 +366,7 @@ def file_delete_original(origfile: str) -> bool:
         return False, ""
     if wipemethod == "shred":
         subprocess.run(["shred", "-u", "-n", str(config["shred_passes"]), origfile])
-        return True,f"\nFile {origfile} has been shredded with 'shred -n {numpasses} -u ${origfile}'"
+        return True,f"\nOriginal file {os.path.basename(origfile)} has been shredded with {numpasses} passes."
 
     elif wipemethod == "dd":
         if filewipedata(origfile, numpasses):
@@ -404,7 +420,7 @@ def process_file(filepath, password, mode, output, delete_method, shred_passes, 
     if booldelete:
         printstr = printstr + strdelete
     if boolcrypt or booldelete:
-        outl(printstr, INFO)
+        return printstr
 def filewipedata(path, passes):
     """Overwrites data in file {path} {passes} times. and deletes it."""
     filesize = os.path.getsize(path)
@@ -448,67 +464,73 @@ def merge_args_with_config(args, config):
         ),
         "auto_overwrite": (config.get("auto_overwrite")),
         "delete_original": (config.get("delete_original")),
+        "verbose_logging": (config.get("verbose_logging")),
     }
     return merged
 
 def selectfilesindir(path, default="*"):
-    all_files = [
-        f
-        for f in os.listdir(path)
-        if os.path.isfile(os.path.join(path, f))
-    ]
-    files_abs_path = [
-        os.path.abspath(os.path.join(path, f))
-        for f in os.listdir(path)
-        if os.path.isfile(os.path.join(path, f))
-    ]
-    files = "*. All files in current folder\n"
-    for i, filename in enumerate(all_files):
-        files += f"{i+1}.{filename}\n"
+    global config
+    retfiles = []
+    if config['use_zenity']:
+        return zenity_select_files(path)
+    else:
+        all_files = [
+            f
+            for f in os.listdir(path)
+            if os.path.isfile(os.path.join(path, f))
+        ]
+        files_abs_path = [
+            os.path.abspath(os.path.join(path, f))
+            for f in os.listdir(path)
+            if os.path.isfile(os.path.join(path, f))
+        ]
+        files = "*. All files in current folder\n"
+        for i, filename in enumerate(all_files):
+            files += f"{i+1}.{filename}\n"
 
-    selection = outl(
-        f"""No input file specified, choose one. Enter full path to file or any file in folder (or corresponding number):
-            {path}\n{files}""",
-        ENTRY,
-    )
+        selection = outl(
+            f"""No input file specified, choose one. Enter full path to file or any file in folder (or corresponding number):
+                {path}\n{files}""",
+            ENTRY,
+        )
 
-    # Try single number selection
-    try:
-        selectnum = int(selection) - 1
-        if 0 <= selectnum < len(files_abs_path):
-            outl(f"Selected file is: {all_files[selectnum]} (num:{selectnum+1})", DEBUG)
-            return [files_abs_path[selectnum]]
-    except ValueError:
-        pass
+        # Try single number selection
+        try:
+            selectnum = int(selection) - 1
+            if 0 <= selectnum < len(files_abs_path):
+                outl(f"Selected file is: {all_files[selectnum]} (num:{selectnum+1})", DEBUG)
+                return [files_abs_path[selectnum]]
+        except ValueError:
+            pass
 
-    # If '*' return all files
-    if selection.strip() == '*':
-        return files_abs_path
+        # If '*' return all files
+        if selection.strip() == '*':
+            return files_abs_path
 
-    # Check for comma/space separated numbers
-    def parse_indices(s):
-        # Accepts numbers separated by commas and/or spaces
-        parts = [p for p in s.replace(',', ' ').split() if p]
-        indices = []
-        for part in parts:
-            if part.isdigit():
-                idx = int(part) - 1
-                if 0 <= idx < len(files_abs_path):
-                    indices.append(idx)
-        return indices
+        # Check for comma/space separated numbers
+        def parse_indices(s):
+            # Accepts numbers separated by commas and/or spaces
+            parts = [p for p in s.replace(',', ' ').split() if p]
+            indices = []
+            for part in parts:
+                if part.isdigit():
+                    idx = int(part) - 1
+                    if 0 <= idx < len(files_abs_path):
+                        indices.append(idx)
+            return indices
 
-    indices = parse_indices(selection)
-    if indices:
-        selected_files = [files_abs_path[i] for i in indices]
-        outl(f"Selected files: {selected_files}", DEBUG)
-        return selected_files
+        indices = parse_indices(selection)
+        if indices:
+            selected_files = [files_abs_path[i] for i in indices]
+            outl(f"Selected files: {selected_files}", DEBUG)
+            return selected_files
 
-    # If user entered a path, check if it's a file
-    if os.path.isfile(selection.strip()):
-        return [os.path.abspath(selection.strip())]
+        # If user entered a path, check if it's a file
+        if os.path.isfile(selection.strip()):
+            return [os.path.abspath(selection.strip())]
 
-    outl(f"{selection} is not a valid selection!", ERROR)
-    return []
+        outl(f"{selection} is not a valid selection!", ERROR)
+        return []
 def passwordcheck(mode):
     global config
     """Only ask for password once"""
@@ -598,6 +620,8 @@ def main():
         help="Number of times to overwrite old files with random data. If you decrypt a file, this setting will write /dev/urandom over the original unencrypted file and then automatically remove it if argument --auto-delete or configuration variable delete_original in config.json is set to true.")
     parser.add_argument("-d", "--auto-delete",action="store_true",default=False,
         help="Chooses if original file should be automatically deleted or not after encryption/decryption")
+    parser.add_argument("--verbose",action="store_true",
+        help="Verbose logging")
     parser.add_argument("-v", "--version",action="version",
         version=f"""EasyCrypt v{__version__}
         Copyright ©️ 2025 Maximilian Cornett Email: 📧 max.cornett@gmail.com""",
@@ -626,60 +650,85 @@ def main():
     if isinstance(shred_passes, dict):
         shred_passes = shred_passes.get("Value", 1)
 
+
+
     numfiles = len(config["input_files"])
-    if numfiles > 0:
-        outl(f"Loaded {numfiles} input files, starting with: {config['input_files'][0]}",INFO)
-    else:
+    if numfiles == 0:        
         """
         If no input files are specified, get files from current working directory, print then to user and ask him which one he wants to choose.
         """
-        currentworkingdirectory = os.getcwd()
-        selection = selectfilesindir(currentworkingdirectory)
+        config["input_files"].append(os.getcwd())
+        numfiles=1
+    
+    if numfiles > 0:
+        if os.path.isdir(config["input_files"][0]) and numfiles == 1:
+            """
+            If only one 'file' is input and it is a directory, open select files dialog box
+            """
+            currentworkingdirectory = config["input_files"][0]
+            if config['verbose_logging']:
+                outl(f"{currentworkingdirectory}", INFO)
+            selection = selectfilesindir(currentworkingdirectory)          
+            for curpath in selection:
+                if os.path.isfile(curpath):
+                    print(f"Appending file:{curpath}")
+                    config["input_files"].append(curpath)
+                else:
+                    print(f"Error not a file:{curpath}")  
+        else:
+            if config['verbose_logging']:
+                outl(f"Loaded {numfiles} input files, starting with: {config['input_files'][0]}",INFO)
+
         
-        config["input_files"] = selection
-        #inputfiles = selection
+
+            
     # Loop over input files or input string(s)
     curcount = 0
     password = ""
     filemode = True  # set to false when we send a string to process_file function instead of file.
     
-
-    for curfilein in config["input_files"]:
-        outl(f"working on file: {curfilein}")
-        if (not os.path.isfile(curfilein) and curfilein == "-") or len(curfilein) < 1:
-            outl(f"File not found: {curfilein}. Assuming STDIN", ERROR)
-            filemode = False
-            tmpdata = outl(
-                "We will take a string input from you now. Go ahead...", QUESTION
-            )
-            if not config['use_zenity']:
-                tmpdata = input("We will take a string input from you now. Go ahead...")
-                curfilein = tmpdata
+    numfiles = len(config['input_files'])
+    
+    if numfiles > 0:
+        printstr = ""
+        for curfilein in config["input_files"]:
+            
+            outl(f"working on file: {curfilein}")
+            if (not os.path.isfile(curfilein) and curfilein == "-") or len(curfilein) < 1:
+                outl(f"File not found: {curfilein}. Assuming STDIN", ERROR)
                 filemode = False
-            mode = config["mode"] if config["mode"] else "encrypt"
-            if password == "":
-                password = passwordcheck(mode)
-        elif os.path.isfile(curfilein):
+                tmpdata = outl(
+                    "We will take a string input from you now. Go ahead...", QUESTION
+                )
+                if not config['use_zenity']:
+                    tmpdata = input("We will take a string input from you now. Go ahead...")
+                    curfilein = tmpdata
+                    filemode = False
+                mode = config["mode"] if config["mode"] else "encrypt"
+                if password == "":
+                    password = passwordcheck(mode)
+            elif os.path.isfile(curfilein):
 
-            filemode = True
-            if is_file_encrypted(curfilein):
-                mode = "decrypt"
-            else:
-                mode = "encrypt"
-            if password == "":
-                password = passwordcheck(mode)
-            process_file(
-                curfilein,
-                password,
-                mode,
-                curfilein,
-                config["delete_method"],
-                shred_passes,
-                filemode,
-            )
+                filemode = True
+                if is_file_encrypted(curfilein):
+                    mode = "decrypt"
+                else:
+                    mode = "encrypt"
+                if password == "":
+                    password = passwordcheck(mode)
+                printstr = printstr + "\n\n" + process_file(
+                    curfilein,
+                    password,
+                    mode,
+                    curfilein,
+                    config["delete_method"],
+                    shred_passes,
+                    filemode,
+                )
+        outl(f"{printstr}", INFO)
 
-        # Output file handling
-
+    else:
+        outl(f"No files selected! Nothing to do.", ERROR)
 
 if __name__ == "__main__":
 
