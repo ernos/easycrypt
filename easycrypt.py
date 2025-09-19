@@ -628,14 +628,16 @@ def main():
         help="Show program's version number and exit.")
     args = parser.parse_args()
 
-
-        
+    if args.config:
+        configfile = load_config(args.config)
+    else:
+        load_config(strConfigFile)
 
     # Merge args and config, command-line args take precedence
     global config
     global msgtype
     config = merge_args_with_config(args, configfile)
-    load_config(config['config_file'])
+
     if config["use_zenity"]:
         msgtype = "zenity"
     elif config["use_zenity"] == False:
