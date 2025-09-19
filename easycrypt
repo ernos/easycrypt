@@ -630,6 +630,8 @@ def main():
 
     if args.config:
         configfile = load_config(args.config)
+    else:
+        configfile = load_config(strConfigFile)
 
 
     # Merge args and config, command-line args take precedence
