@@ -460,7 +460,7 @@ def merge_args_with_config(args, config):
             else config.get("shred_passes", 6)
         ),
         "config_file": (
-            args.config if args.config is not None else config.get(strConfigFile)
+            args.config if os.path.isfile(args.config) is True else f"{os.path.expanduser("~")}/{strConfigFile}"
         ),
         "auto_overwrite": (config.get("auto_overwrite")),
         "delete_original": (config.get("delete_original")),
@@ -638,6 +638,8 @@ def main():
     global config
     global msgtype
     config = merge_args_with_config(args, configfile)
+
+    outl(f"OUTPUT: {config["config_file"]}")
 
     if config["use_zenity"]:
         msgtype = "zenity"

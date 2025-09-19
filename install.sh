@@ -3,7 +3,7 @@ BIN="$HOME/bin"
 EXTDIR="$HOME/.local/share/nautilus-python/extensions"
 EASYCRYPTFOLDER="$PWD"
 BINFOLDER="$HOME/bin"
-EASYCRYPT="easycrypt.py"
+EASYCRYPT="easycrypt"
 NAUTEXTENS="easycrypt-nautilus.py"
 EASYCRYPTCONFIG="easycryptconfig.json"
 echo "${PWD}/${EASYCRYPT}" 
@@ -21,7 +21,7 @@ echo "Creating symlinks for local bin folder"
 
 # Symlink main script and config to ~/bin
 ln -s "${PWD}/${EASYCRYPT}" "${BINFOLDER}/easycrypt"
-ln -s "${PWD}/${EASYCRYPTCONFIG}" "${BINFOLDER}/${EASYCRYPTCONFIG}"
+ln -s "${PWD}/${EASYCRYPTCONFIG}" "${HOME}/${EASYCRYPTCONFIG}"
 
 # Create Nautilus extension directory if it doesn't exist
 if [[ ! -d "$EXTDIR" ]]; then
