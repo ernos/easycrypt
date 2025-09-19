@@ -7,7 +7,17 @@ EasyCrypt is a Python-based tool for secure file encryption and decryption, supp
 ## Description
 
 Encrypt or decrypt files securely, with optional Zenity GUI or terminal interaction.  
-By default, EasyCrypt uses Zenity dialogs for password entry and notifications, making it ideal for integration as a Nautilus script (place in `~/.local/share/nautilus/scripts`).  
+By default, EasyCrypt uses Zenity dialogs for password entry and notifications, making it ideal for integration as a Nautilus script (place in `~/.local/share/nautilus/scripts` together with your config.json file (use_zenity=True)).
+There is also a separate nautilus extension script that adds an item to the nautilus context menu. For this to work you make the file executable and add it to you PATH environment variable (or just put it into /usr/bin if you have root access).
+Installing without root access:
+```
+git clone https://github.com/ernos/easycrypt.git
+mkdir ~/bin
+ln -s ~/easycrypt/easycrypt ~/bin/easycrypt
+#if your $PATH env does not have your /home/x/bin you need to run these two commands as well:
+echo 'PATH="$HOME/bin:$PATH"' >> .bashrc
+source .bashrc
+```
 You can also use the script directly from the terminal or in automation contexts, with options to disable Zenity and control input/output methods.  
 EasyCrypt reads the default configuration file `config.json` in the same directory as the script. Command-line arguments override configuration file settings.
 
