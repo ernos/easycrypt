@@ -35,7 +35,7 @@ DEBUGVERBOSE = 11
 __version__ = "1.4"
 LoggingLevel = DEBUGVERBOSE
 global config
-strConfigFile = "config.json"
+strConfigFile = "easycrypt-config.json"
 
 
 def zenity_info(msg):
